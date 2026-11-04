@@ -9,9 +9,19 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Claude%20Code-skill-2563eb" alt="Claude Code skill">
+  <img src="https://img.shields.io/badge/Claude%20Code-skill-D97757?logo=claude&logoColor=white" alt="Claude Code skill">
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT license">
   <img src="https://img.shields.io/badge/runs-autonomously-2563eb" alt="Runs autonomously">
+  <a href="https://maritime.sh"><img src="https://img.shields.io/badge/by-Maritime-111111" alt="by Maritime"></a>
+</p>
+
+<p align="center"><sub>WORKS WITH</sub><br>
+  <img src="https://img.shields.io/badge/Gmail-EA4335?style=for-the-badge&logo=gmail&logoColor=white" alt="Gmail">
+  <img src="https://img.shields.io/badge/Google%20Calendar-4285F4?style=for-the-badge&logo=googlecalendar&logoColor=white" alt="Google Calendar">
+  <img src="https://img.shields.io/badge/HubSpot-FF7A59?style=for-the-badge&logo=hubspot&logoColor=white" alt="HubSpot">
+  <img src="https://img.shields.io/badge/Crunchbase-0288D1?style=for-the-badge&logo=crunchbase&logoColor=white" alt="Crunchbase">
+  <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge" alt="LinkedIn">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
 </p>
 
 A Claude Code skill that runs a weekly outbound cycle like a careful researcher would, just
@@ -173,6 +183,15 @@ under LinkedIn's terms. Cold email at volume can get a domain flagged; start wit
 cap.
 
 ## Built by Maritime
+
+<p align="center">
+  <a href="https://maritime.sh">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/maritime-dark.png">
+      <img src="assets/maritime-light.png" alt="Maritime logo" height="64">
+    </picture>
+  </a>
+</p>
 
 This skill is open-sourced by [Maritime](https://maritime.sh) (YC F26), the cloud platform that gives every AI agent its own computer: sandboxes, agent boxes that keep their disk, and Linux desktops, Windows desktops and Android phones your agent can see and click. We run this skill ourselves.
 
