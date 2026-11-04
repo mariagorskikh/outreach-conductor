@@ -47,9 +47,12 @@ behind it:
 - One that is clearly worse: stop using it, and add a line to the config's
   `sender.banned_phrases` or `drafting.avoid` with the numbers.
 - A bucket or angle with a much better meeting rate: propose shifting up to 10 points of
-  next week's quota toward it. Say so in the kickoff. A bigger shift is the user's call.
-- **Never change the sender's voice from numbers alone.** A wording change goes to the user
-  as a proposal. Only their yes, or their own edits, changes `sender.voice_notes`.
+  next week's quota toward it. Do it and say so in the report. A bigger shift is the user's
+  call.
+- **Never change the sender's voice from numbers alone.** A wording change goes into the
+  report as a proposal. Only the user's yes, or their own edits, changes `sender.voice_notes`.
+  Shifting quota between buckets and angles inside the 10 point limit, and adding to
+  `drafting.avoid`, the skill does itself and reports.
 
 ## Small numbers lie
 
@@ -58,6 +61,6 @@ week of data. Look at the trend in `history.jsonl` and wait for n.
 
 ## The user's edits are the other half
 
-Compare the drafts you created with what the user actually sent (from the sends export
-`body` column). A change they made twice becomes a voice note or a banned phrase. Record
+Compare the drafts you created with what was actually sent (from the sends export `body`
+column), and read any user edits to the config or to drafts. A change they made twice becomes a voice note or a banned phrase. Record
 each learned rule with the date in the config, so the next run starts from it.

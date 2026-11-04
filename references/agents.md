@@ -51,7 +51,8 @@ Output: append one JSON line per company to <path> as soon as it is done. Re-rea
 first and skip companies already there.
 Rules: one person per company; legit or out; never guess a fact; no sub-agents; searches one
 at a time, a few seconds apart, back off on rate limits; your search share is <N>.
-Do not email, message, invite, RSVP or post anything.
+Do not email, message, invite, RSVP or post anything. Sending is done only by the main
+session, after the self-review gate.
 Stop at <N> rows or <time>, then reply with counts (found, kept, dropped by reason) and the
 file path.
 ```

@@ -1,8 +1,8 @@
 # LinkedIn: the weekly top prospects
 
-Only when `linkedin.enabled` is true. This skill picks and ranks people. The user sends the
-invites themselves, or approves an exact list for a tool they run. Never automate LinkedIn
-beyond what its terms allow.
+Only when `linkedin.enabled` is true. This skill picks and ranks people. Invites go out by
+the user's hand, or through the tool the user configured in `linkedin.invite_tool` and is
+responsible for. Never automate LinkedIn beyond what its terms allow.
 
 ## The weekly cap
 
@@ -15,7 +15,8 @@ beyond what its terms allow.
   minus that count. Say it in the kickoff message.
 - On any warning from LinkedIn (a limit notice, a captcha, a checkpoint, "unusual activity",
   a phone verification), stop everything, record `stopped` in the ledger, lower the cap to
-  what was sent in the 7 days before the stop, and tell the user. No raise without their go.
+  what was sent in the 7 days before the stop, and tell the user in the report. This is a
+  hard stop in every mode. No raise without their go.
 
 ## Who goes on the list
 
@@ -43,12 +44,20 @@ A first-degree connection at a company you are about to cold email is a warm pat
 next to that draft. A direct message may beat the email. Never message someone who was
 already emailed this week unless the user says so for that person.
 
-## The user's go
+## Handing the list on
 
-Post `linkedin-top<N>.csv` (rank, name, title, company, fit, bucket, degree, mutuals, ties,
-one-line why, emailed this week) with the counts. One go covers that exact list for the week.
-Invites are sent by the user, or by a tool the user runs and has approved, inside the cap,
-best first, spread over the week. Notes on invites are optional; default none.
+`linkedin-top<N>.csv` has rank, name, title, company, fit, bucket, degree, mutuals, ties,
+one-line why, and emailed this week.
+
+- **Autonomous mode with `linkedin.invite_tool` set:** after the self-review gate (each person
+  verified, none already connected, pending, in the ledger, or opted out), hand the list to the
+  tool inside the weekly and daily caps, best first, spread over the week. Record each result
+  in the ledger. Any warning from LinkedIn is a hard stop.
+- **No invite tool:** the list is in the report for the user to send by hand.
+- **Review mode:** post the list with the counts and wait. One go covers that exact list for
+  the week.
+
+Notes on invites are optional; default none.
 
 At the end of the week, `week.py carry` writes every listed person with no ledger row to next
 week's `linkedin-queue.csv`, and next week's `top` gives them a small boost.

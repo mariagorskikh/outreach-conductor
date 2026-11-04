@@ -3,6 +3,15 @@
 This is not legal advice. It is the floor this skill holds to. The user is responsible for
 their own outreach and should check the rules where they and their recipients are.
 
+## Autonomous sending makes this the skill's job
+
+In `autonomous` mode the skill sends on the user's behalf, so deliverability and compliance
+are its job on every send: the `compliance.footer` (a physical postal address and an opt-out
+line where the law asks for one) is added by `week.py send-queue`, opt-outs are checked before
+every batch, bounces are counted after every batch, and any warning stops sending. If the
+config has no footer and the recipients are in a place that requires one, set it during
+setup; do not send commercial email without it there.
+
 ## Email
 
 - **CAN-SPAM (US).** Honest sender name and address. No misleading subject lines (no fake
@@ -26,7 +35,8 @@ their own outreach and should check the rules where they and their recipients ar
 
 - Follow each platform's user agreement. LinkedIn prohibits most automated activity and
   scraping. This skill ranks people; the user sends invites by hand or through a tool they
-  have chosen and are responsible for.
+  have chosen, configured as `linkedin.invite_tool`, and are responsible for. The skill never
+  drives LinkedIn itself.
 - Respect rate limits and any warning the platform shows. A warning means stop, not retry.
 - Never create fake accounts, never use someone else's account, never bypass a captcha or
   checkpoint.

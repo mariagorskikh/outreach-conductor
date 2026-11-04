@@ -55,7 +55,7 @@ At a multiplier of 2 and 100 drafts:
 ## Report template (`report.md` and the chat hand-off)
 
 ```
-Week <YYYY-Www>: <N> drafts created (plan <P>)
+Week <YYYY-Www>: <N> sent, <N> drafts created (plan <P>)
 
 Bucket      plan  drafted  verified-email  held  dropped
 <bucket>     ...      ...             ...   ...      ...
@@ -66,8 +66,10 @@ Angle       plan  drafted
 Candidates researched: <N>; dropped <N> (top reasons: ...)
 Email: <X>% on a verified rung (by rung: ...)
 Credits: <tool> used <N>, balance <N>; purchases: none
-LinkedIn: <N> chosen, <N> already connected, <N> sent so far (by the user), cap <N>
+Sent: <N> over <N> days (cap <N>/day); bounced <N>; opt-outs added <N>; stops hit: <none or which>
+LinkedIn: <N> chosen, <N> already connected, <N> sent so far (by the user or the invite tool), cap <N>
 Removed by the gates: <N> already contacted, <N> already met, <N> excluded, <N> competitors
 Learned from last week: <three changes, with the numbers behind them>
+Waiting for a yes (money only): <none, or the amount and what it buys>
 Drafts file: <state_dir>/<week>/drafts-<week>.md
 ```

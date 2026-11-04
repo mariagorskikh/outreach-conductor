@@ -13,11 +13,20 @@
   week.py export-drafts [--out F]       hand-off Markdown of drafted/created rows, grouped by bucket
   week.py top N [--out F]               rank LinkedIn top prospects -> linkedin-top<N>.csv
   week.py carry                         roll unsent LinkedIn top prospects into next week's queue
-  week.py crm [--apply]                 log people to the CRM with tags, never as touches
+  week.py send-queue --out F [--reviewed] [--date D]
+                                        today's send list: drafted/created rows, inside email.daily_send_cap,
+                                        opt-outs removed, footer added; refuses while sending is paused
+  week.py sent F                        record real sends (rows with key, sent_at, optional bounced); status -> sent;
+                                        pauses sending when hard bounces pass email.bounce_stop
+  week.py crm [--apply]                 log people to the CRM with tags; touches only for real sends
 
 Global options go before the command: --config PATH, --week YYYY-Www (default: current ISO week).
 Only this script writes prospects.jsonl. Agents write their own JSONL files and `add` folds them in.
 Rows key on the registrable domain. Standard library only.
+
+Sending: this script never sends anything. `send-queue` without --reviewed is a dry run. The agent passes
+--reviewed only after the batch was approved (by the user in review mode, by the self-review gate in
+autonomous mode). The actual send happens through the user's configured mail connector (email.send_via).
 """
 import argparse
 import csv
@@ -436,8 +445,8 @@ def cmd_status(a):
             rung[r.get("email_status") or "none"] += 1
         if s == "dropped":
             drops[(r.get("drop_reason") or "?").split(" 2")[0][:40]] += 1
-    cols = ["candidate", "verified", "ready", "drafted", "created", "hold", "dropped"]
-    print(f"Week {plan['week']}: {sum(by[b]['_out'] for b in by)} drafted or created (plan {plan['total']}, "
+    cols = ["candidate", "verified", "ready", "drafted", "created", "sent", "hold", "dropped"]
+    print(f"Week {plan['week']}: {sum(by[b]['_out'] for b in by)} drafted, created or sent (plan {plan['total']}, "
           f"{len(rows)} rows, candidate target {plan['candidates']})\n")
     print(f"{'bucket':<12}{'plan':>6}{'out':>6}  " + "".join(f"{x[:9]:>10}" for x in cols))
     for b in list(plan["buckets"]) + [x for x in by if x not in plan["buckets"]]:
@@ -572,7 +581,7 @@ def cmd_export(a):
     wk = week_id(a.week)
     rows = [r for r in load_rows(d).values() if r.get("status") in ("drafted", "created")]
     label = bool(get(CFG, "email.label_guesses", True))
-    out = [f"# Drafts {wk}\n", f"{len(rows)} drafts. Review each one before sending.\n"]
+    out = [f"# Drafts {wk}\n", f"{len(rows)} drafts. Each passed the self-review gate; check any you want before sending.\n"]
     for b in precedence() + sorted({r.get("bucket") or "?" for r in rows} - set(precedence())):
         group = [r for r in rows if (r.get("bucket") or "?") == b]
         if not group:
@@ -673,7 +682,7 @@ def cmd_top(a):
                         (r.get("fit_sentence") or "")[:120], "yes" if r.get("status") == "created" else "",
                         r.get("linkedin_url")])
     cap = get(CFG, "linkedin.weekly_invite_cap", 50)
-    print(f"{out}: {len(top)} of {len(pool)} eligible (weekly invite cap {cap}; the user sends)")
+    print(f"{out}: {len(top)} of {len(pool)} eligible (weekly invite cap {cap}; sent by hand or linkedin.invite_tool)")
 
 
 def cmd_carry(a):
@@ -696,6 +705,117 @@ def cmd_carry(a):
     print(f"{len(rows)} unsent top prospects queued for {ny}-W{nw:02d}")
 
 
+def pause_file():
+    return os.path.join(state_root(CFG), "SENDING_PAUSED")
+
+
+def all_sent_rows():
+    root = state_root(CFG)
+    out = []
+    if not os.path.isdir(root):
+        return out
+    for wk in sorted(os.listdir(root)):
+        d = os.path.join(root, wk)
+        if os.path.isdir(d) and re.match(r"^\d{4}-W\d{2}$", wk):
+            out += [r for r in load_rows(d).values() if r.get("status") == "sent"]
+    return out
+
+
+def bounce_check():
+    """Write SENDING_PAUSED when hard bounces pass email.bounce_stop (after at least 20 sends)."""
+    sent = all_sent_rows()
+    n, b = len(sent), sum(1 for r in sent if r.get("bounced"))
+    stop = float(get(CFG, "email.bounce_stop", 0.03))
+    if n >= 20 and b / n > stop and not os.path.exists(pause_file()):
+        open(pause_file(), "w").write(
+            f"paused {dt.datetime.now().isoformat(timespec='seconds')}: {b} of {n} sends bounced "
+            f"({b / n:.1%}), above email.bounce_stop {stop:.0%}. Fix addresses, then delete this file to resume.\n")
+        print(f"SENDING PAUSED: {b} of {n} bounced ({b / n:.1%} > {stop:.0%}); see {pause_file()}")
+    return n, b
+
+
+def footer_for(r):
+    foot = (get(CFG, "compliance.footer") or "").strip()
+    if not foot:
+        return ""
+    regions = get(CFG, "compliance.footer_regions", "all")
+    if regions in (None, "", "all") or (r.get("country") or "").upper() in {str(x).upper() for x in regions}:
+        return foot
+    return ""
+
+
+def cmd_send_queue(a):
+    d = need_dir(a)
+    if os.path.exists(pause_file()):
+        sys.exit("sending is paused: " + open(pause_file(), encoding="utf-8").read().strip())
+    bounce_check()
+    if os.path.exists(pause_file()):
+        sys.exit("sending is paused by the bounce stop; no queue written")
+    day = a.date or dt.date.today().isoformat()
+    cap = int(get(CFG, "email.daily_send_cap", 50))
+    already = sum(1 for r in all_sent_rows() if (r.get("sent_at") or "")[:10] == day)
+    room = max(0, cap - already)
+    ex_dom, ex_email = exclusions()
+    send_guesses = bool(get(CFG, "email.send_guesses", False))
+    skipped = Counter()
+    pool = []
+    rows = load_rows(d)
+    for r in sorted(rows.values(), key=lambda r: -int(r.get("fit_score") or 0)):
+        if r.get("status") not in ("drafted", "created"):
+            continue
+        email = (r.get("email") or "").strip().lower()
+        if not email:
+            skipped["no address"] += 1
+        elif email in ex_email or reg_domain(email) in ex_dom:
+            skipped["opt-out or excluded"] += 1
+        elif str(r.get("review") or "").lower().startswith(("hold", "fail")):
+            skipped["review held it"] += 1
+        elif r.get("email_status") not in VERIFIED_RUNGS and not send_guesses:
+            skipped["unverified address (email.send_guesses is false)"] += 1
+        else:
+            pool.append(r)
+    queue = pool[:room]
+    if len(pool) > room:
+        skipped[f"over today's cap ({cap}, {already} sent already)"] += len(pool) - room
+    out = []
+    for r in queue:
+        b = to_batch_row(r)
+        foot = footer_for(r)
+        if foot and foot not in (b["text"] or ""):
+            b["text"] = (b["text"] or "").rstrip() + "\n\n" + foot
+        out.append(b)
+    print(f"{len(out)} to send on {day} (cap {cap}, {already} already sent today, {len(pool)} eligible)")
+    for k, v in skipped.items():
+        print(f"  skipped {v}: {k}")
+    if not a.reviewed:
+        print("dry run; pass --reviewed once the batch is approved (by the user in review mode, "
+              "by the self-review gate in autonomous mode)")
+        return
+    json.dump(out, open(a.out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    print(f"{a.out}: {len(out)} rows; spread them through email.business_hours, then record with `week.py sent`")
+
+
+def cmd_sent(a):
+    d = need_dir(a)
+    rows = load_rows(d)
+    n = 0
+    for b in read_jsonl(a.file):
+        k = b.get("key")
+        if k not in rows or not b.get("sent_at"):
+            continue
+        r = rows[k]
+        r["status"] = "sent"
+        r["sent_at"] = b["sent_at"]
+        for f in ("message_id", "bounced"):
+            if b.get(f) not in (None, ""):
+                r[f] = b[f]
+        n += 1
+    save_rows(d, rows)
+    print(f"{n} rows marked sent")
+    total, bounced = bounce_check()
+    print(f"all weeks: {total} sent, {bounced} bounced")
+
+
 CRM_COLS = ["email", "name", "company", "website", "linkedin_url", "title", "location", "status", "last_contacted",
             "tags", "fit_score", "fit_reason", "notes", "source"]
 
@@ -710,6 +830,10 @@ def crm_contacts(rows, wk):
             tags.append(f"angle-{r['angle']}")
         if r.get("status") == "created":
             tags.append("draft-not-sent")             # a draft is never a touch
+        if r.get("status") == "sent":
+            tags.append("sent")                       # a real send is a touch
+            if r.get("bounced"):
+                tags.append("bounced")
         if r.get("email_status"):
             tags.append("email-" + r["email_status"])
         if r.get("creative_touch"):
@@ -718,6 +842,7 @@ def crm_contacts(rows, wk):
                     "website": r.get("website") or "", "linkedin_url": r.get("linkedin_url") or "",
                     "title": r.get("title") or "", "location": r.get("country") or "", "fit_score": r.get("fit_score") or "",
                     "fit_reason": r.get("fit_reason") or "", "notes": r.get("fit_sentence") or "",
+                    "last_contacted": (r.get("sent_at") or "")[:10] if r.get("status") == "sent" else "",
                     "source": "outreach-conductor", "add_tags": tags})
     return out
 
@@ -728,7 +853,8 @@ def cmd_crm(a):
     contacts = crm_contacts(load_rows(d), wk)
     path = os.path.join(d, "crm-import.json")
     json.dump({"contacts": contacts}, open(path, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    print(f"{path}: {len(contacts)} contacts (no touches, no status changes)")
+    nsent = sum(1 for c in contacts if "sent" in c["add_tags"])
+    print(f"{path}: {len(contacts)} contacts ({nsent} real sends logged as touches; drafts are never touches)")
     if not a.apply:
         print("dry run; pass --apply to write")
         return
@@ -763,7 +889,11 @@ def cmd_crm(a):
         for f, v in c.items():
             if v not in ("", None) and not (cur.get(f) or "").strip():
                 cur[f] = str(v)                       # never overwrite what is there
+        if c.get("last_contacted") and c["last_contacted"] > (cur.get("last_contacted") or ""):
+            cur["last_contacted"] = c["last_contacted"]   # a newer real send moves the touch date
         old = [t for t in (cur.get("tags") or "").split(";") if t.strip()]
+        if "sent" in tags:
+            old = [t for t in old if t != "draft-not-sent"]
         cur["tags"] = ";".join(old + [t for t in tags if t not in old])
     os.makedirs(os.path.dirname(p) or ".", exist_ok=True)
     with open(p + ".tmp", "w", newline="", encoding="utf-8") as f:
@@ -797,12 +927,19 @@ def main():
     p.add_argument("n", type=int)
     p.add_argument("--out")
     sp.add_parser("carry")
+    p = sp.add_parser("send-queue")
+    p.add_argument("--out", required=True)
+    p.add_argument("--reviewed", action="store_true",
+                   help="the batch passed approval: the user's in review mode, the self-review gate in autonomous mode")
+    p.add_argument("--date", help="YYYY-MM-DD the cap counts against (default today)")
+    sp.add_parser("sent").add_argument("file")
     sp.add_parser("crm").add_argument("--apply", action="store_true")
     a = ap.parse_args()
     CFG = load_config(a.config)
     {"init": cmd_init, "crm-pull": cmd_crm_pull, "add": cmd_merge, "merge": cmd_merge, "gate": cmd_gate,
      "status": cmd_status, "batch": cmd_batch, "uniq": cmd_uniq, "ids": cmd_ids, "export-drafts": cmd_export,
-     "top": cmd_top, "carry": cmd_carry, "crm": cmd_crm}[a.cmd](a)
+     "top": cmd_top, "carry": cmd_carry, "send-queue": cmd_send_queue, "sent": cmd_sent,
+     "crm": cmd_crm}[a.cmd](a)
 
 
 if __name__ == "__main__":

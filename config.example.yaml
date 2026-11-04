@@ -3,6 +3,11 @@
 # Quote any text that contains a colon or a hash sign. Paths are relative to this file.
 # Never put API keys here. Use environment variables.
 
+autonomy:
+  mode: autonomous        # autonomous (default): asks setup questions once, then does the whole job and reports after.
+                          # review: stops for the user's okay before each outward action (the old gates).
+  money_needs_approval: true   # always true: anything that spends money waits for the user's yes
+
 sender:
   name: "Jane Doe"
   role: "Founder"
@@ -24,19 +29,19 @@ sender:
     - "circle back"
 
 offer:
-  one_line: "Example Co helps mid-size clinics cut scheduling admin with an assistant that works inside their existing system."
-  problem: "Front desk staff spend hours a day on rescheduling and reminders."
+  one_line: "Example Co helps mid-size clinics cut no-shows with automated patient reminders."
+  problem: "Missed appointments cost clinics hours of staff time and lost revenue every week."
   proof_points:
     - "Used by clinics in three states"
-    - "Setup takes a day, no new software for staff"
+    - "Setup takes a day"
 
 icp:
-  description: "Companies that sell software or services to mid-size healthcare practices and need to work inside the systems those practices already use."
+  description: "Mid-size healthcare practices and the companies that run them, with 5 to 50 providers."
   must_have:
     - "Sells to businesses, not consumers"
     - "Product touches a workflow our offer improves"
   signals:
-    - "Website names the system or workflow we sit next to"
+    - "Website offers online booking"
     - "Recent funding round or launch"
     - "Job posts mentioning the problem we solve"
   disqualifiers:
@@ -92,10 +97,10 @@ bucket_precedence: [warm, events, region-a, core]
 angles:
   - name: angle-one
     share: 0.6
-    description: "Companies whose product needs to work inside a legacy system."
+    description: "Multi-location practice groups."
   - name: angle-two
     share: 0.4
-    description: "Companies that run one assistant per end customer."
+    description: "Single-location specialty clinics."
 angle_backfill: [angle-one, angle-two]
 
 sources:                                  # what the scouts may use; all optional except web_search
@@ -114,8 +119,21 @@ crm:
 
 email:
   drafts_destination: "handoff-file"      # handoff-file, or the name of your email connector
+  send_via: none                          # name of the email connector or tool that sends from your own
+                                          # mailbox (for example a Gmail or Outlook connector), or none.
+                                          # none: the skill creates drafts and you send.
+  daily_send_cap: 50                      # most first-touch emails sent per day, spread through business hours
+  business_hours: "09:00-17:00"           # sender's local time; sends are spread across this window
+  send_guesses: false                     # true lets unverified-rung addresses (pattern, guess) be sent too
   label_guesses: true                     # mark unverified addresses in the hand-off
-  bounce_stop: 0.03
+  bounce_stop: 0.03                       # sending pauses by itself when hard bounces pass this share
+
+compliance:
+  footer: ""                              # text added to every sent email, for example a physical postal
+                                          # address and an opt-out line ("Not relevant? Reply 'no' and I
+                                          # will not write again."). Required for commercial email in
+                                          # many places; see references/compliance.md.
+  footer_regions: all                     # all, or a list of country codes that get the footer
 
 drafting:
   max_body_words: 120
@@ -127,6 +145,8 @@ drafting:
 
 linkedin:
   enabled: true
+  invite_tool: ""                         # a tool you run and are responsible for that sends invites, or empty.
+                                          # Empty: you send the invites by hand from the ranked list.
   weekly_invite_cap: 50
   daily_invite_cap: 15
   ledger_path: "data/linkedin-ledger.csv"
@@ -138,10 +158,11 @@ learning:
   opener_patterns: {}                     # optional extra opener families, name to regex
 
 spending:
-  weekly_budget: 0                        # in your currency; 0 means free sources only
+  weekly_budget: 0                        # in your currency; 0 means free sources only.
+                                          # Any spend above this, and any purchase, waits for your yes.
 
 creative_touch:
   enabled: false
-  share: 0.0                              # at most 0.05; user approves every asset
+  share: 0.0                              # at most 0.05; self-reviewed like drafts (user approves in review mode)
 
 state_dir: "state"

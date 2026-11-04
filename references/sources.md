@@ -19,7 +19,7 @@ requires a login the user has not set up.
    talks, public posts by founders about the pain.
 3. **Directories and portfolios.** Accelerator batches, investor portfolio pages, industry
    associations, marketplace and integration directories (who lists an integration with the
-   system your product sits next to).
+   tools your customers already use).
 4. **Events.** Attendee lists the user can legitimately see (events they attended or hosted),
    speaker lists, sponsor lists.
 5. **Launch sites and communities.** Product launch sites, developer forums, newsletters that

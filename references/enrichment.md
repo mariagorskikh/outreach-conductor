@@ -32,8 +32,8 @@ personal addresses unless the person published them for business contact.
 - Below the line, enrich harder (a second tool, a teammate's verified address for the
   pattern) before drafting more guesses.
 - Rungs 6 and 7 may be drafted only when the row is otherwise strong (top fit score or a
-  real tie). Whether they are labelled in the hand-off is `email.label_guesses` (default
-  true: the user should know which addresses are guesses before they send).
+  real tie). They are sent only when `email.send_guesses` is true (default false: they stay
+  as drafts). Whether they are labelled in the hand-off is `email.label_guesses`.
 - A guess never goes to a domain that bounced before, or where two people at the company
   share a first name.
 
@@ -41,8 +41,9 @@ personal addresses unless the person published them for business contact.
 
 - Run enrichment in one dedicated agent or in the main session, not across every agent:
   hundreds of tool calls fill context fast, and one place keeps the credit count honest.
-- Before Phase 3, check balances. Estimate the week's need. If it exceeds
-  `spending.weekly_budget`, say so in the kickoff and wait for a yes.
+- Before Phase 3, check balances. Estimate the week's need. Inside
+  `spending.weekly_budget`, go ahead. Above it, ask once in chat with the amount, keep working
+  on free sources meanwhile, and spend only after an explicit yes. Free sources need nothing.
 - Write `enrich-<n>.jsonl` and a credit log line per call batch.
 
 ## Bounces
@@ -50,5 +51,6 @@ personal addresses unless the person published them for business contact.
 Next week's run reads bounces before drafting: from the sends export (`bounced` column) or
 from bounce notifications in the mailbox. A bounced address is dead; the row gets a new
 person or a new address from rung 1. A domain with a bounce gets no guesses. If hard bounces
-pass `email.bounce_stop` (default 3%) of sends, tell the user to pause, and draft only
-verified rungs next week. High bounce rates damage the sender's domain for months.
+pass `email.bounce_stop` (default 3%) of sends, `week.py sent` pauses sending by itself
+(`SENDING_PAUSED`), the report says so, and next week drafts only verified rungs. High bounce
+rates damage the sender's domain for months.

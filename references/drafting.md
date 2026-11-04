@@ -9,8 +9,8 @@ sender's newest real emails disagree, the emails win and this file gets fixed.
 1. Pick 3 to 5 example emails per shape (cold, event follow-up, warm intro) from the sender's
    sent examples, preferring ones that got replies. Writers get the real emails in their
    brief, not a summary of them.
-2. Read last week's "Change next week" lines and any edits the user made to last week's
-   drafts. A change they made twice is now a rule.
+2. Read last week's "Change next week" lines and any edits the user made to drafts or sent
+   mail. A change they made twice is now a rule.
 
 ## Shape per bucket
 
@@ -27,7 +27,7 @@ Set these in the config under each bucket's `shape`. Sensible defaults:
 
 1. A real milestone from the last 3 months, said simply ("Congrats on the seed round!").
 2. A post, launch or talk of theirs from the last 2 weeks ("Saw your post on ...").
-3. What they build, in their own words ("Saw you're building {what they do}").
+3. What they do, in their own words ("I saw {company} helps {customer} {do X}").
 
 Never invent a hook. A row whose hook cannot be made true and current gets the plain opener
 (3). `hook_source` must be a URL or the word `plain`.
@@ -100,10 +100,14 @@ their site, body length inside the configured limit.
 `creative_touch` in the config lets the user add a small, personal extra (a custom image, a
 short personalized video, a hand-made mockup) to a small share of top prospects, default 0%.
 If enabled: only top fit rows, never more than about 5% of the week, only when you are sure
-of the person's identity, and the user approves the idea and every asset before it is
-attached. Measure it as its own segment in `reply_rates.py`.
+of the person's identity, and every asset passes the self-review gate like the email does
+(the user approves each one in `review` mode). If making the asset costs money, that needs
+the user's yes. Measure it as its own segment in `reply_rates.py`.
 
 ## Creating them
+
+The self-review gate in `SKILL.md` (lint, `uniq`, the review loop, every fact and link
+checked) runs before anything below. Sending itself is in `references/sending.md`.
 
 `week.py batch --out drafts-<week>.json` writes rows with to, cc, subject, text, first,
 company, bucket, angle, email_status, hook_source, tie_source. Create drafts in the user's

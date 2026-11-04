@@ -1,11 +1,13 @@
 # First-run setup: the interview
 
-Run this when `config.yaml` does not exist, or when the user says the ICP, offer or mix has
-changed. Ask in small groups, not one long form. Offer a sensible default for every question
-so the user can just say "yes".
+Run this when `config.yaml` does not exist, when a needed value is blank, or when the user
+says the ICP, offer or mix has changed. This is the "ask once" step: put the questions in one
+short batch, offer a sensible default for every question so the user can just say "yes", and
+fill anything you can find yourself (their website, their sent mail) instead of asking.
 
-Write the answers into a copy of `config.example.yaml` named `config.yaml`, show the user the
-filled file, and get a yes before Phase 0.
+Write the answers into a copy of `config.yaml` from `config.example.yaml` and continue
+straight into Phase 0. In `review` mode, show the filled file and wait for a yes first. After
+this, weekly runs ask nothing.
 
 ## 1. The sender
 
@@ -44,9 +46,8 @@ quarter if they saw it". 3 means "plausible, not urgent". Below `icp.min_fit_sco
 
 ## 4. Volume and mix
 
-- How many drafts a week do you want to review and send? Default 100. Recommend 50 to 200.
-  Say plainly: a smaller number of well researched drafts beats a big number of thin ones,
-  and every draft needs the user's own review before it goes out.
+- How many emails a week? Default 100. Recommend 50 to 200. Say plainly: a smaller number
+  of well researched emails beats a big number of thin ones.
 - Buckets (who, and how you reach them). Suggest a starting mix, for example:
   `warm` (a real connection) 10%, `events` (people met or seen at events) 10%,
   `region-a` 30%, `core` 50%. Each bucket gets a share and a short description. Warm buckets
@@ -62,16 +63,24 @@ quarter if they saw it". 3 means "plausible, not urgent". Below `icp.min_fit_sco
   JSON). Never store API keys in the config; use environment variables.
 - Which research tools do you have? Web search is enough to start. Optional: a company
   database, an enrichment tool, a search API, a news feed, event platforms.
-- Where do drafts go? Your email client's drafts folder through a connector, or a Markdown
-  hand-off file you paste from.
+- Should the skill send from your mailbox? Name the mail connector or tool (`email.send_via`),
+  or `none` to get drafts only. Then: a daily cap (`email.daily_send_cap`, default 50; about
+  10 if the mailbox or domain is new), your business hours, and whether unverified addresses
+  may be sent (`email.send_guesses`, default no).
+- The footer for commercial email (`compliance.footer`): your physical postal address and a
+  one-line opt-out. Required in many places (see `references/compliance.md`).
 - Is there a weekly budget for paid enrichment credits? Default 0 (free sources only).
+  Anything above it, and any purchase, is always asked about first.
+- Autonomy: `autonomous` (default: runs end to end and reports after) or `review` (stops for
+  your okay before each send, invite and CRM write).
 
 ## 6. LinkedIn
 
 - Do you want a weekly list of top people to connect with? Default yes.
 - Weekly cap? Default 50, daily 15. Tell the user LinkedIn's real limits change and are often
-  lower for new or low-activity accounts. Stay well under them. The user sends the invites or
-  approves a specific list.
+  lower for new or low-activity accounts. Stay well under them.
+- Do you run a tool for invites (`linkedin.invite_tool`)? If yes, the skill hands it the
+  ranked list inside the caps. If no, the list is in the report and you send by hand.
 
 ## 7. Learning
 
@@ -82,4 +91,4 @@ quarter if they saw it". 3 means "plausible, not urgent". Below `icp.min_fit_sco
 ## After the interview
 
 Write `config.yaml`, then run `python3 scripts/week.py --help` and `python3
-scripts/week.py init` to confirm the config parses. Fix any error before Phase 1.
+scripts/week.py init` to confirm the config parses. Fix any error yourself and continue.
