@@ -1,0 +1,17 @@
+date,to,subject,body,replied,meeting,bounced,industry
+2026-01-12,sam@acme-health.example,Scheduling inside Acme Health's clinics,"Hi Sam,
+
+Congrats on the seed round! I saw Acme Health works with practices that still run scheduling by hand.
+
+We help clinics cut that admin without new software for staff.
+
+Would love to chat.
+
+Best,
+Jane",true,true,false,healthcare
+2026-01-13,kim@contoso.example,Quick idea,"Hi Kim,
+
+I'm the founder of Example Co. We help companies like yours save time.
+
+Best,
+Jane",false,false,false,logistics

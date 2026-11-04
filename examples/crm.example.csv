@@ -1,0 +1,3 @@
+email,name,company,website,linkedin_url,title,location,status,last_contacted,tags,fit_score,fit_reason,notes,source
+sam@acme-health.example,Sam Rivera,Acme Health,https://acme-health.example,https://www.linkedin.com/in/sam-rivera-example,CTO,US,contacted,2026-01-12,outreach-conductor;wk-2026-W02,4,Sells to clinics and names their scheduling system,,outreach-conductor
+lee@northwind.example,Lee Park,Northwind Labs,https://northwind.example,,CEO,UK,,,draft-not-sent,3,,,manual

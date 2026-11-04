@@ -1,0 +1,17 @@
+# Your configuration and secrets
+config.yaml
+.env
+.env.*
+
+# Run state and your data
+state/
+data/
+voice/
+
+# Python
+__pycache__/
+*.pyc
+
+# CSV exports (keep the examples)
+*.csv
+!*.example.csv

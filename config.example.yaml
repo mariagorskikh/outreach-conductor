@@ -1,0 +1,147 @@
+# outreach-conductor configuration.
+# Copy to config.yaml (gitignored) and fill it in, or let the skill interview you on first run.
+# Quote any text that contains a colon or a hash sign. Paths are relative to this file.
+# Never put API keys here. Use environment variables.
+
+sender:
+  name: "Jane Doe"
+  role: "Founder"
+  company: "Example Co"
+  website: "https://example.org"
+  booking_link: ""                       # used only where a bucket shape allows it
+  sent_examples_path: "voice/sent-examples.md"
+  voice_notes:
+    - "Short sentences. Plain words. Sounds like a person typing, not a brochure."
+    - "Greeting is 'Hi {first},' and sign-off is 'Best,' then the first name."
+    - "Body under 120 words. One idea, one ask."
+    - "Opens with something specific about them, never about us."
+    - "No exclamation marks in a row, no emoji, no em dashes or en dashes."
+  banned_phrases:
+    - "I hope this email finds you well"
+    - "I wanted to reach out"
+    - "quick question"
+    - "synergy"
+    - "circle back"
+
+offer:
+  one_line: "Example Co helps mid-size clinics cut scheduling admin with an assistant that works inside their existing system."
+  problem: "Front desk staff spend hours a day on rescheduling and reminders."
+  proof_points:
+    - "Used by clinics in three states"
+    - "Setup takes a day, no new software for staff"
+
+icp:
+  description: "Companies that sell software or services to mid-size healthcare practices and need to work inside the systems those practices already use."
+  must_have:
+    - "Sells to businesses, not consumers"
+    - "Product touches a workflow our offer improves"
+  signals:
+    - "Website names the system or workflow we sit next to"
+    - "Recent funding round or launch"
+    - "Job posts mentioning the problem we solve"
+  disqualifiers:
+    - "Agencies and consultancies"
+    - "Pre-product or stealth with no site"
+    - "Direct competitors"
+  target_roles: ["CTO", "Technical co-founder", "CEO", "Founder", "VP Engineering"]
+  never_roles: ["Intern", "Advisor", "Former founder", "Investor", "Recruiter"]
+  fit_rubric:
+    - "5 = clear need, right stage, would likely buy this quarter"
+    - "4 = clear need, timing unknown"
+    - "3 = plausible need, not urgent"
+    - "2 = weak fit"
+    - "1 = not a fit"
+  min_fit_score: 3
+  seed_customers: ["seed-one.example", "seed-two.example"]
+  competitors: ["competitor-one.example", "competitor-two.example"]
+  exclude_domains: []
+  exclude_files: ["data/do-not-contact.csv"]   # CSV with a domain or email column
+
+volume:
+  drafts_per_week: 100                   # recommend 50 to 200; quality first
+  candidate_multiplier: 2                # candidates to find per draft
+  verified_email_min: 0.8                # share of drafts on a verified address rung
+  max_parallel_agents: 8
+
+buckets:
+  - name: warm
+    share: 0.10
+    description: "People with a real connection to the sender. Never cold."
+    requires: ["warm_path"]
+    backfill: never
+    shape: "Open with the connection. Short. The ask is a conversation."
+  - name: events
+    share: 0.10
+    description: "People from events the sender attended in the last 60 days."
+    requires: ["event.name", "event.date"]
+    angles: false
+    backfill_to: core
+    shape: "Name the event and when. No hard pitch."
+  - name: region-a
+    share: 0.30
+    description: "Companies in a second region with its own wording rules."
+    backfill_to: core
+    shape: "Same as core. Local details only when true."
+  - name: core
+    share: 0.50
+    description: "The main cold pool."
+    shape: "Opener, one line on the problem, one line on the offer, one ask."
+
+bucket_precedence: [warm, events, region-a, core]
+
+angles:
+  - name: angle-one
+    share: 0.6
+    description: "Companies whose product needs to work inside a legacy system."
+  - name: angle-two
+    share: 0.4
+    description: "Companies that run one assistant per end customer."
+angle_backfill: [angle-one, angle-two]
+
+sources:                                  # what the scouts may use; all optional except web_search
+  - web_search
+  - "company database (for example Apollo or Crunchbase), if you have access"
+  - "search API with find-similar (for example Exa), if you have a key"
+  - "funding news and launch sites"
+  - "job boards"
+  - "event platforms, read only, events you attended"
+
+crm:
+  type: csv                               # csv or command
+  path: "data/crm.csv"                    # for type csv; columns in examples/crm.example.csv
+  export_command: ""                      # for type command; prints CSV to stdout
+  import_command: ""                      # for type command; receives the path of a JSON file
+
+email:
+  drafts_destination: "handoff-file"      # handoff-file, or the name of your email connector
+  label_guesses: true                     # mark unverified addresses in the hand-off
+  bounce_stop: 0.03
+
+drafting:
+  max_body_words: 120
+  template_lines:                         # line starts that may repeat across drafts
+    - "Hi "
+    - "Best,"
+    - "Would love to chat"
+  avoid: []                               # patterns learned from reply rates
+
+linkedin:
+  enabled: true
+  weekly_invite_cap: 50
+  daily_invite_cap: 15
+  ledger_path: "data/linkedin-ledger.csv"
+  title_pattern: "\\bcto\\b|chief technology|co-?founder|\\bfounder\\b|\\bceo\\b|chief executive|\\bvp\\b|vice president|head of"
+
+learning:
+  sends_csv: "data/sends.csv"
+  min_n: 30
+  opener_patterns: {}                     # optional extra opener families, name to regex
+
+spending:
+  weekly_budget: 0                        # in your currency; 0 means free sources only
+
+creative_touch:
+  enabled: false
+  share: 0.0                              # at most 0.05; user approves every asset
+
+state_dir: "state"
